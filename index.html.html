@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RS Courtage — Simulateur Assurance Emprunteur</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+  :root{--navy:#0B1F3A;--navy-mid:#152d52;--gold:#C8963E;--gold-light:#E8B96A;--cream:#F7F4EF;--cream-dark:#EDE8DF;--white:#FFFFFF;--text-main:#0B1F3A;--text-muted:#6B7A8D;--text-light:#A0AABB;--success:#1A7A5E;--success-bg:#E6F5F0;--green:#00A651;--radius:16px;--radius-sm:8px;--shadow:0 4px 24px rgba(11,31,58,0.10);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);min-height:100vh;display:flex;flex-direction:column;align-items:center;color:var(--text-main);}
+  .header{width:100%;background:var(--navy);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+  .logo{display:flex;align-items:center;gap:10px;}
+  .logo-badge{width:36px;height:36px;background:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Instrument Serif',serif;font-size:15px;color:var(--white);}
+  .logo-text{font-size:14px;font-weight:600;color:var(--white);letter-spacing:0.04em;}
+  .logo-sub{font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:0.08em;text-transform:uppercase;display:block;}
+  .header-right{font-size:12px;color:rgba(255,255,255,0.6);text-align:right;}
+  .header-right strong{display:block;color:var(--gold-light);font-size:13px;}
+  .progress-wrap{margin-bottom:20px;}
+  .progress-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--text-light);margin-bottom:8px;}
+  .progress-bar-bg{height:4px;background:var(--cream-dark);border-radius:2px;overflow:hidden;}
+  .progress-bar-fill{height:100%;background:var(--gold);border-radius:2px;transition:width 0.5s cubic-bezier(.4,0,.2,1);}
+  .step-tabs{display:flex;overflow-x:auto;background:var(--white);border-radius:var(--radius) var(--radius) 0 0;border-bottom:2px solid var(--cream-dark);scrollbar-width:none;}
+  .step-tabs::-webkit-scrollbar{display:none;}
+  .step-tab{flex:1;min-width:60px;padding:11px 4px 9px;text-align:center;font-size:9px;font-weight:500;color:var(--text-light);letter-spacing:0.03em;text-transform:uppercase;border-bottom:2px solid transparent;margin-bottom:-2px;display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .step-tab.done{color:var(--green);}
+  .step-tab.active{color:var(--green);border-bottom-color:var(--green);}
+  .step-card{background:var(--white);border-radius:0 0 var(--radius) var(--radius);padding:22px 18px 18px;box-shadow:var(--shadow);animation:slideUp 0.3s cubic-bezier(.4,0,.2,1);}
+  @keyframes slideUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  .step-eyebrow{font-size:11px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;font-weight:500;margin-bottom:5px;}
+  .step-title{font-family:'Instrument Serif',serif;font-size:20px;color:var(--navy);line-height:1.3;margin-bottom:4px;}
+  .step-desc{font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:18px;}
+  .sec-head{background:var(--green);color:white;padding:9px 12px;border-radius:var(--radius-sm) var(--radius-sm) 0 0;font-size:12px;font-weight:600;}
+  .sec-body{border:1.5px solid var(--cream-dark);border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);padding:14px 12px;margin-bottom:14px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:11px;font-weight:500;color:var(--text-muted);letter-spacing:0.04em;margin-bottom:5px;text-transform:uppercase;}
+  .field label .req{color:var(--gold);}
+  .field input,.field select{width:100%;height:42px;border:1.5px solid var(--cream-dark);border-radius:var(--radius-sm);padding:0 11px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text-main);background:var(--cream);outline:none;transition:border-color 0.2s;appearance:none;}
+  .field input:focus,.field select:focus{border-color:var(--gold);background:var(--white);}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .isuf{position:relative;}
+  .isuf input{padding-right:34px;}
+  .isuf-lbl{position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--text-muted);pointer-events:none;}
+  .tog{display:flex;margin-bottom:12px;}
+  .tog input{display:none;}
+  .tog input+label{padding:8px 16px;border:1.5px solid var(--cream-dark);font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;background:var(--cream);transition:all 0.15s;}
+  .tog input+label.first{border-radius:var(--radius-sm) 0 0 var(--radius-sm);}
+  .tog input+label.last{border-radius:0 var(--radius-sm) var(--radius-sm) 0;border-left:none;}
+  .tog input:checked+label{background:var(--green);border-color:var(--green);color:white;}
+  .rpills{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;}
+  .rpill input{display:none;}
+  .rpill label{display:block;padding:8px 13px;border:1.5px solid var(--cream-dark);border-radius:var(--radius-sm);font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;background:var(--cream);transition:all 0.15s;}
+  .rpill input:checked+label{border-color:var(--navy);background:var(--navy);color:white;}
+  .bank-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:12px;}
+  .bank-item input{display:none;}
+  .bank-item label{display:flex;align-items:center;justify-content:center;height:48px;border:1.5px solid var(--cream-dark);border-radius:var(--radius-sm);background:var(--cream);cursor:pointer;transition:all 0.15s;font-size:10px;font-weight:600;color:var(--text-muted);text-align:center;padding:4px;}
+  .bank-item input:checked+label{border-color:var(--green);background:#E6F5F0;color:var(--success);}
+  .slider-wrap{margin-bottom:14px;}
+  .slider-wrap label{display:flex;justify-content:space-between;font-size:11px;font-weight:500;color:var(--text-muted);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:9px;}
+  .slider-wrap label span{font-size:15px;font-weight:600;color:var(--navy);text-transform:none;letter-spacing:0;}
+  .slider-wrap input[type=range]{width:100%;height:4px;border-radius:2px;background:linear-gradient(to right,var(--gold) 0%,var(--gold) var(--pct,50%),var(--cream-dark) var(--pct,50%));outline:none;border:none;appearance:none;cursor:pointer;}
+  .slider-wrap input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;border-radius:50%;background:var(--white);border:2.5px solid var(--gold);cursor:pointer;}
+  .slider-ticks{display:flex;justify-content:space-between;font-size:10px;color:var(--text-light);margin-top:4px;}
+  .info-box{background:var(--cream);border-left:3px solid var(--gold);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:8px 11px;font-size:12px;color:var(--text-muted);line-height:1.55;margin-bottom:12px;}
+  .info-box strong{color:var(--navy);}
+  .btn-p{width:100%;height:48px;background:var(--navy);color:var(--white);border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:background 0.18s,transform 0.1s;margin-top:8px;}
+  .btn-p:hover{background:var(--navy-mid);}
+  .btn-p.gold{background:var(--gold);}
+  .btn-p.gold:hover{background:#b5842d;}
+  .btn-p.green{background:var(--green);}
+  .btn-p.green:hover{background:#008a44;}
+  .btn-back{width:100%;height:36px;background:transparent;color:var(--text-muted);border:none;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:4px;}
+  .btn-back:hover{color:var(--navy);}
+  .sending-overlay{text-align:center;padding:40px 20px;}
+  .sending-spinner{width:40px;height:40px;border:3px solid var(--cream-dark);border-top-color:var(--green);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .sending-title{font-family:'Instrument Serif',serif;font-size:20px;color:var(--navy);margin-bottom:8px;}
+  .sending-sub{font-size:13px;color:var(--text-muted);}
+  .result-hero{background:var(--navy);border-radius:var(--radius);padding:22px 18px;color:white;margin-bottom:12px;animation:slideUp 0.4s;}
+  .result-eyebrow{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold-light);margin-bottom:7px;}
+  .result-title{font-family:'Instrument Serif',serif;font-size:18px;line-height:1.3;margin-bottom:16px;color:rgba(255,255,255,0.9);}
+  .savings-box{background:var(--gold);border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+  .savings-label{font-size:11px;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px;}
+  .savings-amount{font-family:'Instrument Serif',serif;font-size:34px;color:white;line-height:1;}
+  .savings-sub{font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px;}
+  .metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  .metric{background:rgba(255,255,255,0.07);border-radius:10px;padding:10px 12px;}
+  .metric.hi{background:rgba(200,150,62,0.18);border:1px solid rgba(200,150,62,0.3);}
+  .metric-label{font-size:10px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;}
+  .metric-val{font-size:16px;font-weight:600;color:white;}
+  .metric.hi .metric-val{color:var(--gold-light);}
+  .result-section{background:var(--white);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:10px;animation:slideUp 0.5s;}
+  .result-section-title{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;}
+  .offer-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--cream-dark);}
+  .offer-row:last-child{border-bottom:none;}
+  .offer-name{font-size:13px;font-weight:500;color:var(--text-main);display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+  .offer-taux{font-size:11px;color:var(--text-muted);margin-top:2px;}
+  .offer-price{font-size:15px;font-weight:600;color:var(--navy);text-align:right;}
+  .offer-price-sub{font-size:11px;color:var(--text-muted);}
+  .badge{font-size:10px;padding:2px 6px;border-radius:20px;font-weight:600;}
+  .badge-best{background:var(--success-bg);color:var(--success);}
+  .badge-bank{background:#FEF0E0;color:#B06B10;}
+  .badge-compat{background:#E6F5F0;color:var(--green);}
+  .recap-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--cream-dark);}
+  .recap-row:last-child{border-bottom:none;}
+  .recap-row span:first-child{color:var(--text-muted);}
+  .recap-row span:last-child{font-weight:500;}
+  .cta-section{background:var(--white);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);text-align:center;animation:slideUp 0.6s;}
+  .cta-title{font-family:'Instrument Serif',serif;font-size:20px;color:var(--navy);margin-bottom:6px;}
+  .cta-sub{font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:14px;}
+  .trust-row{display:flex;justify-content:center;gap:16px;margin-top:10px;flex-wrap:wrap;}
+  .trust-item{display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .trust-icon{font-size:16px;color:var(--gold);}
+  .trust-text{font-size:10px;color:var(--text-muted);text-align:center;max-width:55px;line-height:1.3;}
+  .email-sent-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:5px 12px;border-radius:20px;background:var(--success-bg);color:var(--success);font-weight:500;margin-bottom:14px;}
+  .step{display:none;}
+  .step.active{display:block;}
+  .app{width:100%;max-width:540px;padding:22px 14px 60px;}
+  .legal{font-size:10px;color:var(--text-light);text-align:center;margin-top:18px;line-height:1.5;padding:0 8px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-badge">RS</div>
+    <div>
+      <span class="logo-text">RS COURTAGE</span>
+      <span class="logo-sub">Courtier en assurance</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <strong>Devis gratuit &amp; sans engagement</strong>
+    Réponse sous 24h
+  </div>
+</div>
+
+<div class="app">
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-labels">
+      <span id="stepLabel">Étape 1 sur 5</span>
+      <span id="stepPct">20%</span>
+    </div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:20%"></div></div>
+  </div>
+
+  <div class="step-tabs" id="stepTabs">
+    <div class="step-tab active" id="tab1">👤 Assuré</div>
+    <div class="step-tab" id="tab2">💼 Activité</div>
+    <div class="step-tab" id="tab3">€ Prêt</div>
+    <div class="step-tab" id="tab4">🏦 Prêteur</div>
+    <div class="step-tab" id="tab5">📧 Contact</div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="step active" id="step1">
+    <div class="step-card">
+      <p class="step-eyebrow">Informations assuré</p>
+      <h1 class="step-title">Qui souhaitez-vous assurer ?</h1>
+      <p class="step-desc">Informations requises par iAssure pour générer votre simulation personnalisée.</p>
+      <div class="sec-head">Informations personnelles</div>
+      <div class="sec-body">
+        <div class="field">
+          <label>Qualité <span class="req">*</span></label>
+          <select id="qualite"><option value="">— Sélectionner</option><option>M.</option><option>Mme</option></select>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Prénom <span class="req">*</span></label><input type="text" id="prenom" placeholder="Jean"></div>
+          <div class="field"><label>Nom <span class="req">*</span></label><input type="text" id="nom" placeholder="Dupont"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Date de naissance <span class="req">*</span></label><input type="date" id="ddn"></div>
+          <div class="field"><label>Code postal fiscal <span class="req">*</span></label><input type="text" id="cp" placeholder="38000" maxlength="5"></div>
+        </div>
+        <div class="field">
+          <label>Pays de résidence fiscale <span class="req">*</span></label>
+          <select id="pays"><option>France</option><option>Belgique</option><option>Suisse</option><option>Luxembourg</option><option>Autre</option></select>
+        </div>
+      </div>
+      <div class="sec-head">Co-emprunteur</div>
+      <div class="sec-body">
+        <div class="field"><label>Y a-t-il un co-emprunteur ? <span class="req">*</span></label></div>
+        <div class="rpills">
+          <div class="rpill"><input type="radio" name="coempr" id="coNon" value="Non" checked><label for="coNon">Non</label></div>
+          <div class="rpill"><input type="radio" name="coempr" id="coOui" value="Oui"><label for="coOui">Oui</label></div>
+        </div>
+        <div id="coFields" style="display:none">
+          <div class="field-row">
+            <div class="field"><label>Prénom co-emprunteur</label><input type="text" id="co_prenom" placeholder="Marie"></div>
+            <div class="field"><label>Nom co-emprunteur</label><input type="text" id="co_nom" placeholder="Dupont"></div>
+          </div>
+          <div class="field"><label>Date de naissance co-emprunteur</label><input type="date" id="co_ddn"></div>
+        </div>
+      </div>
+      <button class="btn-p green" onclick="goStep(2)">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step" id="step2">
+    <div class="step-card">
+      <p class="step-eyebrow">Activité &amp; Habitudes de vie</p>
+      <h1 class="step-title">Votre profil de risque</h1>
+      <p class="step-desc">Champs requis par iAssure pour le calcul de votre tarif.</p>
+
+      <!-- ASSURÉ PRINCIPAL -->
+      <div class="sec-head">👤 Assuré principal — Activité professionnelle</div>
+      <div class="sec-body">
+        <div class="field"><label>Statut professionnel <span class="req">*</span></label>
+          <select id="statut"><option value="">— Sélectionner</option><option>Salarié Cadre</option><option>Salarié Non-Cadre</option><option>Fonctionnaire</option><option>Indépendant / TNS</option><option>Dirigeant d'entreprise</option><option>Profession libérale</option><option>Retraité(e)</option><option>Sans emploi</option></select>
+        </div>
+        <div class="field"><label>Profession à risque <span class="req">*</span></label>
+          <select id="profRisque"><option>N'exerce aucune de ces professions</option><option>Pompier / Secouriste</option><option>Militaire / Police</option><option>Marin / Plongeur pro</option><option>Travaux en hauteur pro</option><option>Manipulation d'explosifs</option></select>
+        </div>
+        <div class="field"><label>Intitulé de profession <span class="req">*</span></label><input type="text" id="profession" placeholder="Ex : Ingénieur, Infirmière..."></div>
+        <div class="field"><label>Profession manuelle <span class="req">*</span></label></div>
+        <div class="tog">
+          <input type="radio" name="manuel" id="mOui" value="Oui"><label for="mOui" class="first">Oui</label>
+          <input type="radio" name="manuel" id="mNon" value="Non" checked><label for="mNon" class="last">Non</label>
+        </div>
+        <div class="field"><label>Travaux en hauteur <span class="req">*</span></label></div>
+        <div class="tog">
+          <input type="radio" name="hauteur" id="hOui" value="Oui"><label for="hOui" class="first">Oui</label>
+          <input type="radio" name="hauteur" id="hNon" value="Non" checked><label for="hNon" class="last">Non</label>
+        </div>
+        <div class="field"><label>Déplacements professionnels / an <span class="req">*</span></label></div>
+        <div class="tog">
+          <input type="radio" name="deplac" id="dMoins" value="< 20 000 km" checked><label for="dMoins" class="first">&lt; 20 000 km</label>
+          <input type="radio" name="deplac" id="dPlus" value="≥ 20 000 km"><label for="dPlus" class="last">≥ 20 000 km</label>
+        </div>
+      </div>
+
+      <div class="sec-head">👤 Assuré principal — Habitudes de vie</div>
+      <div class="sec-body">
+        <div class="field"><label>Sports à risque <span class="req">*</span></label>
+          <select id="sport"><option>Ne pratique aucun de ces sports</option><option>Moto / Quad</option><option>Alpinisme / Escalade</option><option>Parachutisme / Saut</option><option>Plongée sous-marine</option><option>Sport de compétition</option><option>Aviation légère</option></select>
+        </div>
+        <div class="field"><label>Fumeur <span class="req">*</span></label></div>
+        <div class="tog">
+          <input type="radio" name="fumeur" id="fOui" value="Oui"><label for="fOui" class="first">Oui</label>
+          <input type="radio" name="fumeur" id="fNon" value="Non" checked><label for="fNon" class="last">Non</label>
+        </div>
+      </div>
+
+      <!-- CO-EMPRUNTEUR — affiché seulement si coché Oui à l'étape 1 -->
+      <div id="coActiviteSection" style="display:none">
+        <div class="sec-head" style="background:#1565C0">👥 Co-emprunteur — Activité professionnelle</div>
+        <div class="sec-body">
+          <div class="field"><label>Statut professionnel <span class="req">*</span></label>
+            <select id="co_statut"><option value="">— Sélectionner</option><option>Salarié Cadre</option><option>Salarié Non-Cadre</option><option>Fonctionnaire</option><option>Indépendant / TNS</option><option>Dirigeant d'entreprise</option><option>Profession libérale</option><option>Retraité(e)</option><option>Sans emploi</option></select>
+          </div>
+          <div class="field"><label>Profession à risque <span class="req">*</span></label>
+            <select id="co_profRisque"><option>N'exerce aucune de ces professions</option><option>Pompier / Secouriste</option><option>Militaire / Police</option><option>Marin / Plongeur pro</option><option>Travaux en hauteur pro</option><option>Manipulation d'explosifs</option></select>
+          </div>
+          <div class="field"><label>Intitulé de profession <span class="req">*</span></label><input type="text" id="co_profession" placeholder="Ex : Infirmière, Comptable..."></div>
+          <div class="field"><label>Profession manuelle <span class="req">*</span></label></div>
+          <div class="tog">
+            <input type="radio" name="co_manuel" id="coMOui" value="Oui"><label for="coMOui" class="first">Oui</label>
+            <input type="radio" name="co_manuel" id="coMNon" value="Non" checked><label for="coMNon" class="last">Non</label>
+          </div>
+          <div class="field"><label>Travaux en hauteur <span class="req">*</span></label></div>
+          <div class="tog">
+            <input type="radio" name="co_hauteur" id="coHOui" value="Oui"><label for="coHOui" class="first">Oui</label>
+            <input type="radio" name="co_hauteur" id="coHNon" value="Non" checked><label for="coHNon" class="last">Non</label>
+          </div>
+          <div class="field"><label>Déplacements professionnels / an <span class="req">*</span></label></div>
+          <div class="tog">
+            <input type="radio" name="co_deplac" id="coDMoins" value="< 20 000 km" checked><label for="coDMoins" class="first">&lt; 20 000 km</label>
+            <input type="radio" name="co_deplac" id="coDPlus" value="≥ 20 000 km"><label for="coDPlus" class="last">≥ 20 000 km</label>
+          </div>
+        </div>
+
+        <div class="sec-head" style="background:#1565C0">👥 Co-emprunteur — Habitudes de vie</div>
+        <div class="sec-body">
+          <div class="field"><label>Sports à risque <span class="req">*</span></label>
+            <select id="co_sport"><option>Ne pratique aucun de ces sports</option><option>Moto / Quad</option><option>Alpinisme / Escalade</option><option>Parachutisme / Saut</option><option>Plongée sous-marine</option><option>Sport de compétition</option><option>Aviation légère</option></select>
+          </div>
+          <div class="field"><label>Fumeur <span class="req">*</span></label></div>
+          <div class="tog">
+            <input type="radio" name="co_fumeur" id="coFOui" value="Oui"><label for="coFOui" class="first">Oui</label>
+            <input type="radio" name="co_fumeur" id="coFNon" value="Non" checked><label for="coFNon" class="last">Non</label>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-p green" onclick="goStep(3)">Continuer →</button>
+      <button class="btn-back" onclick="goStep(1)">← Retour</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step" id="step3">
+    <div class="step-card">
+      <p class="step-eyebrow">Informations des prêts</p>
+      <h1 class="step-title">Votre crédit immobilier</h1>
+      <p class="step-desc">Retrouvez ces données sur votre tableau d'amortissement ou contrat d'assurance.</p>
+      <div class="sec-head">Informations générales</div>
+      <div class="sec-body">
+        <div class="field-row">
+          <div class="field"><label>Date d'effet <span class="req">*</span></label><input type="date" id="dateEffet"></div>
+          <div class="field"><label>Objet du financement <span class="req">*</span></label>
+            <select id="objetFin"><option value="">— Sélectionner</option><option>Résidence principale</option><option>Résidence secondaire</option><option>Investissement locatif</option><option>Travaux</option><option>Immobilier professionnel</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="sec-head">Prêt 1</div>
+      <div class="sec-body">
+        <div class="field"><label>Nature de prêt <span class="req">*</span></label>
+          <select id="naturePret"><option>Prêt Amortissable</option><option>Prêt In Fine</option><option>Prêt à Taux Zéro (PTZ)</option><option>Prêt Relais</option><option>Prêt à Paliers</option></select>
+        </div>
+        <div class="slider-wrap">
+          <label>Capital restant dû <span id="capitalVal">200 000 €</span></label>
+          <input type="range" id="capital" min="10000" max="1000000" step="5000" value="200000">
+          <div class="slider-ticks"><span>10 000 €</span><span>1 000 000 €</span></div>
+        </div>
+        <div class="field">
+          <label>Taux du prêt <span class="req">*</span></label><div class="isuf"><input type="number" id="tauxPret" value="3.50" step="0.01" min="0.1" max="10"><span class="isuf-lbl">%</span></div>
+        </div>
+        <div class="field"><label>Type de taux <span class="req">*</span></label></div>
+        <div class="tog">
+          <input type="radio" name="typeTaux" id="tFixe" value="Fixe" checked><label for="tFixe" class="first">Fixe</label>
+          <input type="radio" name="typeTaux" id="tVar" value="Variable ou révisable"><label for="tVar" class="last">Variable ou révisable</label>
+        </div>
+        <div class="field"><label>Périodicité des échéances <span class="req">*</span></label>
+          <select id="periodicite"><option>Mensuel</option><option>Trimestriel</option><option>Annuel</option></select>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Durée restante <span class="req">*</span></label><div class="isuf"><input type="number" id="dureeM" value="240" step="12" min="12" max="360"><span class="isuf-lbl">mois</span></div></div>
+          <div class="field"><label>Différé amortissement</label><div class="isuf"><input type="number" id="differe" value="0" step="1" min="0" max="24"><span class="isuf-lbl">mois</span></div></div>
+        </div>
+        <div class="info-box"><strong>Où trouver ces infos ?</strong> Capital restant dû → tableau d'amortissement. TAEA → contrat d'assurance actuel (taux moyen bancaire : 0,30–0,40%).</div>
+      </div>
+      <div class="field"><label>Garanties souhaitées <span class="req">*</span></label>
+        <select id="garanties"><option>Décès - PTIA - ITT / IPT / IPP</option><option>Décès - PTIA - ITT / IPT</option><option>Décès - PTIA uniquement</option><option>Décès - PTIA - ITT / IPT / IPP + Perte d'emploi</option></select>
+      </div>
+      <!-- Quotité & Franchise assuré principal -->
+      <div class="sec-head">Quotité &amp; Franchise — Assuré principal</div>
+      <div class="sec-body">
+        <div class="field"><label>Quotité assurée <span class="req">*</span></label></div>
+        <div class="rpills">
+          <div class="rpill"><input type="radio" name="quotite" id="q100" value="100%" checked><label for="q100">100%</label></div>
+          <div class="rpill"><input type="radio" name="quotite" id="q75" value="75%"><label for="q75">75%</label></div>
+          <div class="rpill"><input type="radio" name="quotite" id="q50" value="50%"><label for="q50">50%</label></div>
+          <div class="rpill"><input type="radio" name="quotite" id="q25" value="25%"><label for="q25">25%</label></div>
+        </div>
+        <div class="field"><label>Franchise ITT <span class="req">*</span></label>
+          <select id="franchise"><option>30 jours</option><option>60 jours</option><option selected>90 jours</option><option>180 jours</option></select>
+        </div>
+      </div>
+      <!-- Quotité & Franchise co-emprunteur — affiché si co-emprunteur -->
+      <div id="coQuotiteSection" style="display:none">
+        <div class="sec-head" style="background:#1565C0">Quotité &amp; Franchise — Co-emprunteur</div>
+        <div class="sec-body">
+          <div class="field"><label>Quotité assurée co-emprunteur <span class="req">*</span></label></div>
+          <div class="rpills">
+            <div class="rpill"><input type="radio" name="co_quotite" id="coq100" value="100%" checked><label for="coq100">100%</label></div>
+            <div class="rpill"><input type="radio" name="co_quotite" id="coq75" value="75%"><label for="coq75">75%</label></div>
+            <div class="rpill"><input type="radio" name="co_quotite" id="coq50" value="50%"><label for="coq50">50%</label></div>
+            <div class="rpill"><input type="radio" name="co_quotite" id="coq25" value="25%"><label for="coq25">25%</label></div>
+          </div>
+          <div class="field"><label>Franchise ITT co-emprunteur <span class="req">*</span></label>
+            <select id="co_franchise"><option>30 jours</option><option>60 jours</option><option selected>90 jours</option><option>180 jours</option></select>
+          </div>
+        </div>
+      </div>
+      <button class="btn-p green" onclick="goStep(4)">Continuer →</button>
+      <button class="btn-back" onclick="goStep(2)">← Retour</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step" id="step4">
+    <div class="step-card">
+      <p class="step-eyebrow">Organisme prêteur</p>
+      <h1 class="step-title">Quelle est votre banque ?</h1>
+      <p class="step-desc">Nécessaire pour vérifier la compatibilité des offres avec votre établissement.</p>
+      <div class="bank-grid">
+        <div class="bank-item"><input type="radio" name="banque" id="bBP" value="Banque Populaire"><label for="bBP">Banque Populaire</label></div>
+        <div class="bank-item"><input type="radio" name="banque" id="bCE" value="Caisse d'Épargne"><label for="bCE">Caisse d'Épargne</label></div>
+        <div class="bank-item"><input type="radio" name="banque" id="bCA" value="Crédit Agricole"><label for="bCA">Crédit Agricole</label></div>
+        <div class="bank-item"><input type="radio" name="banque" id="bCIC" value="CIC"><label for="bCIC">CIC</label></div>
+        <div class="bank-item"><input type="radio" name="banque" id="bCM" value="Crédit Mutuel"><label for="bCM">Crédit Mutuel</label></div>
+        <div class="bank-item"><input type="radio" name="banque" id="bBNP" value="BNP Paribas"><label for="bBNP">BNP Paribas</label></div>
+        <div class="bank-item"><input type="radio" name="banque" id="bBPO" value="La Banque Postale"><label for="bBPO">La Banque Postale</label></div>
+        <div class="bank-item"><input type="radio" name="banque" id="bSG" value="Société Générale"><label for="bSG">Société Générale</label></div>
+        <div class="bank-item"><input type="radio" name="banque" id="bLCL" value="LCL"><label for="bLCL">LCL</label></div>
+        <div class="bank-item"><input type="radio" name="banque" id="bCCF" value="CCF"><label for="bCCF">CCF</label></div>
+      </div>
+      <div class="field"><label>Autre banque</label><input type="text" id="autreBanque" placeholder="Tapez le nom de votre banque"></div>
+      <div class="info-box"><strong>Compatible banque</strong> — Les offres iAssure vérifient automatiquement la compatibilité avec les critères de votre prêteur.</div>
+      <button class="btn-p green" onclick="goStep(5)">Continuer →</button>
+      <button class="btn-back" onclick="goStep(3)">← Retour</button>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step" id="step5">
+    <div class="step-card">
+      <p class="step-eyebrow">Dernière étape</p>
+      <h1 class="step-title">Recevez votre simulation</h1>
+      <p class="step-desc">Votre demande de devis est complète. Un conseiller RS Courtage vous recontactera sous 24h avec les meilleures offres.</p>
+      <div class="field-row">
+        <div class="field"><label>Email <span class="req">*</span></label><input type="email" id="email" placeholder="jean@email.com"></div>
+        <div class="field"><label>Téléphone <span class="req">*</span></label><input type="tel" id="tel" placeholder="06 12 34 56 78"></div>
+      </div>
+      <div class="info-box">🔒 Données protégées RGPD — RS Courtage ne les revend jamais à des tiers.</div>
+      <button class="btn-p gold" id="submitBtn" onclick="submitDossier()">Envoyer ma demande de devis →</button>
+      <button class="btn-back" onclick="goStep(4)">← Retour</button>
+    </div>
+  </div>
+
+  <!-- SENDING -->
+  <div class="step" id="stepSending">
+    <div class="step-card">
+      <div class="sending-overlay">
+        <div class="sending-spinner"></div>
+        <p class="sending-title">Envoi de votre devis en cours…</p>
+        <p class="sending-sub">Transmission de votre demande de devis à RS Courtage</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="step" id="stepResult">
+    <div class="email-sent-badge">✅ Demande de devis envoyée à RS Courtage</div>
+
+    <div class="result-hero">
+      <p class="result-eyebrow">Simulation RS Courtage — Kereis / iAssure</p>
+      <p class="result-title">Vos économies estimées en changeant d'assurance</p>
+      <div class="savings-box">
+        <div>
+          <p class="savings-label">Économie totale estimée</p>
+          <p class="savings-amount" id="savingsTotal">—</p>
+          <p class="savings-sub">sur la durée restante du prêt</p>
+        </div>
+        <div style="font-size:30px;opacity:0.6">💰</div>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric"><p class="metric-label">Cotisation actuelle</p><p class="metric-val" id="cotisActuelle">—</p></div>
+        <div class="metric hi"><p class="metric-label">Meilleure offre RS</p><p class="metric-val" id="cotisRS">—</p></div>
+        <div class="metric"><p class="metric-label">Économie / mois</p><p class="metric-val" id="ecoMensuel">—</p></div>
+        <div class="metric"><p class="metric-label">Réduction</p><p class="metric-val" id="ecoPercent">—</p></div>
+      </div>
+    </div>
+
+
+
+    <div class="result-section">
+      <p class="result-section-title">Récapitulatif de votre demande de devis</p>
+      <div class="recap-row"><span>Assuré</span><span id="rNom">—</span></div>
+      <div class="recap-row"><span>Date de naissance</span><span id="rDdn">—</span></div>
+      <div class="recap-row"><span>Statut professionnel</span><span id="rStatut">—</span></div>
+      <div class="recap-row"><span>Fumeur</span><span id="rFumeur">—</span></div>
+      <div class="recap-row"><span>Objet du financement</span><span id="rObjet">—</span></div>
+      <div class="recap-row"><span>Nature de prêt</span><span id="rNature">—</span></div>
+      <div class="recap-row"><span>Capital restant dû</span><span id="rCapital">—</span></div>
+      <div class="recap-row"><span>Durée restante</span><span id="rDuree">—</span></div>
+      <div class="recap-row"><span>Type de taux</span><span id="rTypeTaux">—</span></div>
+      <div class="recap-row"><span>Garanties</span><span id="rGaranties">—</span></div>
+      <div class="recap-row"><span>Quotité</span><span id="rQuotite">—</span></div>
+      <div class="recap-row"><span>Franchise ITT</span><span id="rFranchise">—</span></div>
+      <div class="recap-row"><span>Banque prêteuse</span><span id="rBanque">—</span></div>
+      <div class="recap-row"><span>Contact</span><span id="rContact">—</span></div>
+    </div>
+
+    <div class="cta-section">
+      <p class="cta-title">Votre demande de devis a bien été transmise !</p>
+      <p class="cta-sub">Un conseiller RS Courtage vous rappelle sous 24h avec les meilleures offres personnalisées. Devis 100% gratuit et sans engagement.</p>
+      <div class="trust-row">
+        <div class="trust-item"><span class="trust-icon">🔒</span><span class="trust-text">RGPD & CNIL</span></div>
+        <div class="trust-item"><span class="trust-icon">⚡</span><span class="trust-text">Rappel sous 24h</span></div>
+        <div class="trust-item"><span class="trust-icon">🏆</span><span class="trust-text">Devis gratuit</span></div>
+        <div class="trust-item"><span class="trust-icon">✅</span><span class="trust-text">ORIAS certifié</span></div>
+      </div>
+    </div>
+    <button class="btn-back" style="margin-top:12px;display:block;width:100%;" onclick="goStep(1)">← Nouvelle simulation</button>
+  </div>
+
+  <p class="legal" id="legalText">Simulation non contractuelle. Tarifs définitifs soumis à acceptation iAssure / Kereis. RS Courtage — Immatriculé ORIAS. Loi Lemoine 2022.</p>
+</div>
+
+<script>
+  // EmailJS — configuration RS Courtage
+  emailjs.init('-pWKRk2eJQrW0E6Nl');
+  const EJS_SERVICE  = 'service_pkrayig';
+  const EJS_TEMPLATE = 'template_yzascue';
+
+  const TOTAL = 5;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('dateEffet').value = new Date().toISOString().split('T')[0];
+    updateCap();
+    document.querySelectorAll('input[name=coempr]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        const isOui = radio.value === 'Oui';
+        document.getElementById('coFields').style.display = isOui ? 'block' : 'none';
+        document.getElementById('coActiviteSection').style.display = isOui ? 'block' : 'none';
+        const coQ = document.getElementById('coQuotiteSection');
+        if (coQ) coQ.style.display = isOui ? 'block' : 'none';
+      });
+    });
+  });
+
+  function goStep(n) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.step-tab').forEach((t, i) => {
+      t.classList.remove('active','done');
+      if (i < n-1) t.classList.add('done');
+      if (i === n-1) t.classList.add('active');
+    });
+    if (n <= TOTAL) {
+      document.getElementById('step'+n).classList.add('active');
+      document.getElementById('progressWrap').style.display = 'block';
+      document.getElementById('stepTabs').style.display = 'flex';
+      document.getElementById('legalText').style.display = 'block';
+      const pct = Math.round((n/TOTAL)*100);
+      document.getElementById('progressFill').style.width = pct+'%';
+      document.getElementById('stepLabel').textContent = 'Étape '+n+' sur '+TOTAL;
+      document.getElementById('stepPct').textContent = pct+'%';
+    }
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function g(id){ return document.getElementById(id)?.value || ''; }
+  function r(name){ return document.querySelector('input[name='+name+']:checked')?.value || ''; }
+
+  function collectData() {
+    const banqueEl = document.querySelector('input[name=banque]:checked');
+    const banque = banqueEl ? banqueEl.value : (g('autreBanque') || 'Non renseigné');
+    return {
+      nom_complet:       g('qualite')+' '+g('prenom')+' '+g('nom'),
+      date_naissance:    g('ddn'),
+      code_postal:       g('cp'),
+      pays_residence:    g('pays'),
+      co_emprunteur:     r('coempr'),
+      co_prenom:         g('co_prenom'),
+      co_nom:            g('co_nom'),
+      co_statut:         g('co_statut'),
+      co_profession:     g('co_profession'),
+      co_prof_risque:    g('co_profRisque'),
+      co_manuel:         r('co_manuel'),
+      co_hauteur:        r('co_hauteur'),
+      co_deplacements:   r('co_deplac'),
+      co_sport:          g('co_sport'),
+      co_fumeur:         r('co_fumeur'),
+      statut:            g('statut'),
+      profession:        g('profession'),
+      prof_risque:       g('profRisque'),
+      manuel:            r('manuel'),
+      hauteur:           r('hauteur'),
+      deplacements:      r('deplac'),
+      sport:             g('sport'),
+      fumeur:            r('fumeur'),
+      date_effet:        g('dateEffet'),
+      objet_financement: g('objetFin'),
+      nature_pret:       g('naturePret'),
+      capital:           new Intl.NumberFormat('fr-FR').format(parseInt(g('capital')||200000)),
+      taux_pret:         g('tauxPret')+' %',
+      taea:              g('tauxActuel')+' %',
+      type_taux:         r('typeTaux'),
+      periodicite:       g('periodicite'),
+      duree:             g('dureeM')+' mois ('+Math.round(parseInt(g('dureeM')||240)/12)+' ans)',
+      differe:           g('differe')+' mois',
+      garanties:         g('garanties'),
+      quotite:           r('quotite'),
+      franchise:         g('franchise'),
+      co_quotite:        r('co_quotite') || 'N/A',
+      co_franchise:      g('co_franchise') || 'N/A',
+      banque:            banque,
+      email_client:      g('email'),
+      telephone:         g('tel'),
+      date_soumission:   new Date().toLocaleString('fr-FR')
+    };
+  }
+
+  function calcul() {
+    const capital    = parseInt(document.getElementById('capital').value);
+    const tauxActuel = parseFloat(g('tauxActuel')) / 100;
+    const dureeM     = parseInt(g('dureeM')) || 240;
+    const fumeur     = r('fumeur') === 'Oui';
+    const ddn        = g('ddn');
+    let age = 35;
+    if (ddn) age = Math.floor((new Date() - new Date(ddn)) / (365.25*24*3600*1000));
+    let tauxRS = 0.10/100;
+    if      (age < 30) tauxRS = 0.08/100;
+    else if (age < 40) tauxRS = 0.10/100;
+    else if (age < 50) tauxRS = 0.14/100;
+    else if (age < 60) tauxRS = 0.20/100;
+    else               tauxRS = 0.28/100;
+    if (fumeur) tauxRS *= 1.35;
+    const cotisAct  = capital * tauxActuel / 12;
+    const cotisRS   = capital * tauxRS / 12;
+    const tAlt1     = tauxRS * 1.12;
+    const tAlt2     = tauxRS * 1.22;
+    return { cotisAct, cotisRS, cotisAlt1: capital*tAlt1/12, cotisAlt2: capital*tAlt2/12,
+      ecoMensuel: cotisAct-cotisRS, ecoTotal: (cotisAct-cotisRS)*dureeM,
+      ecoPercent: Math.round(((cotisAct-cotisRS)/cotisAct)*100),
+      tauxRS, tAlt1, tAlt2, tauxActuel };
+  }
+
+  function fmt(n){ return new Intl.NumberFormat('fr-FR').format(Math.round(n)); }
+
+  async function submitDossier() {
+    if (!g('email') || !g('tel')) { alert('Merci de renseigner votre email et téléphone.'); return; }
+
+    // Spinner
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('stepSending').classList.add('active');
+    document.getElementById('progressWrap').style.display = 'none';
+    document.getElementById('stepTabs').style.display = 'none';
+    document.getElementById('legalText').style.display = 'none';
+    window.scrollTo({top:0,behavior:'smooth'});
+
+    const data = collectData();
+
+    // Envoi EmailJS
+    try {
+      await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, data);
+    } catch(e) {
+      console.warn('EmailJS error:', e);
+    }
+
+    // Calcul
+    const c = calcul();
+
+    // Résultat
+    setTimeout(() => {
+      document.getElementById('savingsTotal').textContent  = fmt(c.ecoTotal)+' €';
+      document.getElementById('cotisActuelle').textContent = Math.round(c.cotisAct)+' €/mois';
+      document.getElementById('cotisRS').textContent       = Math.round(c.cotisRS)+' €/mois';
+      document.getElementById('ecoMensuel').textContent    = '- '+Math.round(c.ecoMensuel)+' €';
+      document.getElementById('ecoPercent').textContent    = '- '+c.ecoPercent+' %';
+      document.getElementById('tauxRS').textContent        = (c.tauxRS*100).toFixed(2)+' %';
+      document.getElementById('tauxAlt1').textContent      = (c.tAlt1*100).toFixed(2)+' %';
+      document.getElementById('tauxAlt2').textContent      = (c.tAlt2*100).toFixed(2)+' %';
+      document.getElementById('tauxBanque').textContent    = (c.tauxActuel*100).toFixed(2)+' %';
+      document.getElementById('prixRS').textContent        = Math.round(c.cotisRS)+' €';
+      document.getElementById('prixAlt1').textContent      = Math.round(c.cotisAlt1)+' €';
+      document.getElementById('prixAlt2').textContent      = Math.round(c.cotisAlt2)+' €';
+      document.getElementById('prixBanque').textContent    = Math.round(c.cotisAct)+' €';
+      document.getElementById('rNom').textContent          = data.nom_complet;
+      document.getElementById('rDdn').textContent          = data.date_naissance;
+      document.getElementById('rStatut').textContent       = data.statut;
+      document.getElementById('rFumeur').textContent       = data.fumeur;
+      document.getElementById('rObjet').textContent        = data.objet_financement;
+      document.getElementById('rNature').textContent       = data.nature_pret;
+      document.getElementById('rCapital').textContent      = data.capital+' €';
+      document.getElementById('rDuree').textContent        = data.duree;
+      document.getElementById('rTypeTaux').textContent     = data.type_taux;
+      document.getElementById('rGaranties').textContent    = data.garanties;
+      document.getElementById('rQuotite').textContent      = data.quotite;
+      document.getElementById('rFranchise').textContent    = data.franchise;
+      document.getElementById('rBanque').textContent       = data.banque;
+      document.getElementById('rContact').textContent      = data.email_client+' · '+data.telephone;
+
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      document.getElementById('stepResult').classList.add('active');
+      window.scrollTo({top:0,behavior:'smooth'});
+    }, 2000);
+  }
+
+  // Slider
+  const capEl = document.getElementById('capital');
+  function updateCap() {
+    const v=parseInt(capEl.value), min=parseInt(capEl.min), max=parseInt(capEl.max);
+    capEl.style.setProperty('--pct',((v-min)/(max-min)*100)+'%');
+    document.getElementById('capitalVal').textContent = new Intl.NumberFormat('fr-FR').format(v)+' €';
+  }
+  capEl.addEventListener('input', updateCap);
+</script>
+</body>
+</html>
